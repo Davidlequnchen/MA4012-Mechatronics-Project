@@ -32,61 +32,6 @@ int distanceL3 = 0;
 int distanceS1 = 0;
 
 
-
-// /*--- linear motion-----
-// direction: 1 (forward), -1 (backward)
-// speedMode: 0(stop), 1(1/4 speed),2,3(max speed)
-// */
-// void move(int direction, int speedMode)
-// {
-// 	int voltageLeft;
-// 	int voltageRight;
-// 	if(speedMode==1)
-// 	{
-// 		voltageLeft=30;
-// 		voltageRight=30;
-// 	}
-// 	else if(speedMode==2)
-// 	{
-// 		voltageLeft=60;
-// 		voltageRight=60;
-// 	}
-// 	else if(speedMode==3)
-// 	{
-// 		voltageLeft=120;
-// 		voltageRight=120;
-// 	}
-// 	else if(speedMode==0)
-// 	{
-// 		voltageLeft=0;
-// 		voltageRight=0;
-// 	}
-// 	motor[rightWheel] = -voltageRight*direction;
-// 	motor[leftWheel]  = voltageLeft*direction;
-// }
-
-// // direction: 1: CCW, -1: CW. speed mode 0123
-// void rotate(int direction, int speedMode)
-// {
-// 	int voltage;
-// 	if(speedMode==1)
-// 	{
-// 		voltage=40;
-// 	}
-// 	else if(speedMode==2)
-// 	{
-// 		voltage=60;
-// 	}
-// 	else if(speedMode==0)
-// 	{
-// 		voltage=0;
-// 	}
-// 	motor[rightWheel] = -voltage*direction;
-// 	motor[leftWheel]  = -voltage*direction;
-// }
-
-
-
 /*--- differential drive -----
 direction: 1 (forward), -1 (backward)
 speedMode: 0(stop), 1(1/4 speed),2,3,4(max speed), minus/plus sign
@@ -122,30 +67,30 @@ void start_move()
 
 // return true if ball is detected, otherwise, keep searching
 bool search_ball()
-{
-	while(true)
+{   
+	while(true) // keep searching
 	{
 		clearTimer(T1);
 		while(time1[T1]<1000) // search for 10 seconds
 		{
-			if(sensorL1Detected || sensorL3Detected)
+			if(sensorL1Detected || sensorL3Detected) // if either L1 or L3 detect something
 			{
 				differnetial_drive(0,0); //stop
 				return true;
 			}
-			// if not detected, turn CCW
+			// if not detected, keep turning CCW within this 10 second (90 degree) -- to be determined ///////////////
             differnetial_drive(-1, 1); // rotate CCW
 		}  
 
 		clearTimer(T1);
-		while(time1[T1]<2*700)	
+		while(time1[T1]<2*1000)	
 		{
-			if(sensorL1Detected || sensorL3Detected)
+			if(sensorL1Detected || sensorL3Detected) // if either L1 or L3 detect something
 			{
 				differnetial_drive(0,0); //stop
 				return true;
 			}
-			// if not detected, turn CW
+			// if not detected, keep turning CW within this period (180 degree)
 			differnetial_drive(1,-1);    //rotate CW
 		}
 
@@ -194,17 +139,19 @@ bool move_to_ball()
 		search_ball(); // if it is enemy, go back to search ball state
 		return false;
 	}
+	// else, L2 detects nothing, there is no enemy at front
 	else{
+		// go straight fetch the ball
 		while( distanceL1 > 12 || distanceL3 > 12) // while either of sensor not closed enough to the ball
 		{
-				//move towards the ball until either of the sensor reading within 12 cm
-				differnetial_drive(1,1);
+			//move towards the ball until either of the sensor reading within 12 cm
+			differnetial_drive(1,1);
 		}
 		differnetial_drive(0,0); // stop immediately after the ball is within the range
 	return true;
-}//end of move_to_ball
+	}//end of move_to_ball
 
-	}
+}
 
 
 
@@ -232,12 +179,11 @@ task competition()
 
 	while(true)
 	{
-		if(search_ball()) // check if the ball is found from L1 or L3
+		if(search_ball()) // check if the ball is detected from either L1 or L3
 		{
 			if(move_to_ball())
 			{
 				differnetial_drive(0,0); // stop
-				
 			}
 		}
 	}//end of while true
@@ -246,10 +192,11 @@ task competition()
 
 
 task detection()
-{
+{   
+	// this will always run in the background
 	while(true)
 	{   
-		// sensor output to actual distance value
+		// sensor output converted to actual distance value
 		distanceL1 = 18000/(SensorValue[L1]-100) ;
 	    distanceL2 = 18000/(SensorValue[L2]-100) ;
 		distanceL3 = 18000/(SensorValue[L3]-100) ;

@@ -76,8 +76,9 @@ void differnetial_drive (int leftLevel, int rightLevel);
 
 
 /*--- differential drive -----
-direction: 1 (forward), -1 (backward)
+direction: positive (forward), negative (backward)
 speedMode: 0(stop), 1(1/4 speed),2,3,4(max speed), minus/plus sign
+Example of function call: differential_drive(1,-1) -- turning CW
 */
 void differnetial_drive(int leftLevel, int rightLevel)
 {
@@ -100,7 +101,7 @@ void wait_for_on()
 		// while start switch not activated, wait inside the loop
 	}
 	differnetial_drive(1,1); // move straight ahead
-	wait1Msec(1000);//wait one second
+	wait1Msec(5000);//wait x second (to be determined)    --- move half of arena
 	differnetial_drive(1,-1);
 	wait1Msec(1000);
 

@@ -85,5 +85,9 @@ task checking_reflective_sensor()
 task main()
 {
   wait_for_on();
-
+  while(true)
+  {
+  	wait1Msec(1);
+    // Keep the program alive
+  }
 }

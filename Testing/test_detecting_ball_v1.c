@@ -1,3 +1,5 @@
+#pragma config(Sensor, in2,    shortDistanceSensor, sensorAnalog)
+#pragma config(Sensor, in3,    longDistanceSensor, sensorAnalog)
 #pragma config(Sensor, dgtl3,  startSwitch,    sensorTouch)
 #pragma config(Motor,  port4,           leftWheel,     tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port5,           rightWheel,    tmotorVex393_MC29, openLoop, reversed)
@@ -15,6 +17,7 @@ Functionality:
 */
 
 //---------------------------function definitions----------------------------------
+void wait_for_on();
 void differnetial_drive (float leftLevel, float rightLevel);
 //---------------------------tasks definitions------=------------------------------
 
@@ -39,15 +42,26 @@ void differnetial_drive(float leftLevel, float rightLevel)
 
 void wait_for_on()
 {
-	while(SensorValue[startSwitch] == 0)
+	while(SensorValue[longDistanceSensor] < 300)
 	{
-		// while start switch not activated, wait inside the loop
-	}
-	differnetial_drive(2, -2); // move straight ahead
-	wait1Msec(1000);//wait five second
+		differnetial_drive(-2,2);
+  }
 
-	differnetial_drive(-2, 2); // move straight ahead
-	wait1Msec(1000);//wait five second
+  clearTimer(T1);
+	while(time1[T1]<200)
+	{
+
+			differnetial_drive(2, -2);    //rotate CW
+	}
+
+  //differnetial_drive(0,0);
+
+  while(SensorValue[longDistanceSensor] < 200)
+	{
+		differnetial_drive(1,1);
+  }
+  differnetial_drive(0,0);
+
 
 }
 

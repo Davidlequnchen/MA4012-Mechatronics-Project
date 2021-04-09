@@ -1,6 +1,7 @@
+#pragma config(Sensor, in5,    gripperBumper, sensorAnalog)
 #pragma config(Sensor, dgtl1,  masterSwitch,   sensorTouch)
-#pragma config(Sensor, dgtl2,  BackRightSwitch, sensorTouch)
-#pragma config(Sensor, dgtl3,  BackLeftSwitch, sensorTouch)
+#pragma config(Sensor, dgtl3,  BackRightSwitch, sensorTouch)
+#pragma config(Sensor, dgtl2,  BackLeftSwitch, sensorTouch)
 #pragma config(Motor,  port2,           servoLeft,     tmotorServoStandard, openLoop)
 #pragma config(Motor,  port3,           servoRight,    tmotorServoStandard, openLoop)
 #pragma config(Motor,  port4,           leftWheel,     tmotorVex393_MC29, openLoop, reversed)
@@ -30,20 +31,47 @@ void differnetial_drive(float leftLevel, float rightLevel)
 /* Catch ball
 @param return true if sucessful, false if unsucessful
 */
-
 void catch_ball()	//can change to bool when include checking ball
 {
-    motor[servoRight] = 40;       // Set 'servoMotor' to position -127 (negative end of range)
-		motor[servoLeft] = -50;       // Set 'servoMotor' to position -127 (negative end of range)
+    // move forward a little to secure the ball
+		clearTimer(T1);
+		while(time1[T1]<50)
+		{
+	     differnetial_drive(-0.7, -0.7);
+		}
+
+    motor[servoRight] = 50;       //
+		motor[servoLeft] = -60;       //
 		wait1Msec(550);
+
+		// move forward a little to secure the ball
+		clearTimer(T1);
+		while(time1[T1]<300)
+		{
+	     differnetial_drive(2, 2);
+		}
 }
 
 
 void release_ball()
 {
-	  motor[servoRight] = -35;       // Set 'servoMotor' to position -127 (negative end of range)
-		motor[servoLeft] = 60;       // Set 'servoMotor' to position -127 (negative end of range)
-		wait1Msec(1000);
+   	//align_orientation_with_collection();
+    wait1Msec(500);
+
+    clearTimer(T1);
+		while(time1[T1]<10000) //
+		{
+	     differnetial_drive(-1, -1); // rotate back
+	     if (SensorValue(BackLeftSwitch)!=0 && SensorValue(BackRightSwitch)!=0)
+	     {
+	       // servo release the ball
+	        motor[servoRight] = -45;       // -35
+					motor[servoLeft] = 90;       // 60
+					wait1Msec(1000);
+
+	        differnetial_drive(0, 0); // rotate back
+	     }
+		}
 }
 
 
@@ -61,31 +89,39 @@ task main()
 	wait_for_on();
 	catch_ball();
 
-
-	// move forward a little to secure the ball
-	clearTimer(T1);
-	while(time1[T1]<800)
+	if (SensorValue[gripperBumper] == 0)
 	{
-     differnetial_drive(1, 1);
-	}
+			// move forward a little to secure the ball
+			clearTimer(T1);
+			while(time1[T1]<800)
+			{
+		     differnetial_drive(1, 1);
+			}
 
 
-	while (SensorValue(BackLeftSwitch)== 0 || SensorValue(BackRightSwitch) == 0)
-	{
-		differnetial_drive(-1, -1);    //rotate CW
+			clearTimer(T1);
+			while(time1[T1]<10000) // search for 1.6 seconds (level 1),,, level2 -- 0.8 sec
+			{
+		     differnetial_drive(-2, -2); //  back
+		     if (SensorValue(BackLeftSwitch)!=0 && SensorValue(BackRightSwitch)!=0)
+		     {
+		       release_ball();
+		       differnetial_drive(0, 0); //
+		     }
+
+			}
+
   }
 
-	clearTimer(T1);
-	while(time1[T1]<10000) // search for 1.6 seconds (level 1),,, level2 -- 0.8 sec
+  else
 	{
-     differnetial_drive(-1, -1); // rotate back
-     if (SensorValue(BackLeftSwitch)!=0 && SensorValue(BackRightSwitch)!=0)
-     {
-       release_ball();
-       differnetial_drive(0, 0); // rotate back
-     }
-
+	   // servo release the ball
+	        motor[servoRight] = -45;       // -35
+					motor[servoLeft] = 90;       // 60
+					wait1Msec(1000);
+			    differnetial_drive(-1,-1);
+			    wait1Msec(100);
+			    differnetial_drive(0,0);
 	}
-
 
 }

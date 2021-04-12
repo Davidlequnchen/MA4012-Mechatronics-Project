@@ -1,7 +1,8 @@
 #pragma config(Sensor, in2,    RightDistanceSensor, sensorAnalog)
 #pragma config(Sensor, in3,    LeftDistanceSensor, sensorAnalog)
 #pragma config(Sensor, in4,    enemyDistanceSensor, sensorAnalog)
-#pragma config(Sensor, in5,    gripperBumper, sensorAnalog)
+#pragma config(Sensor, in5,    backDistanceSensor, sensorAnalog)
+#pragma config(Sensor, in6,    gripperBumper, sensorAnalog)
 #pragma config(Sensor, dgtl1,  startSwitch,    sensorTouch)
 #pragma config(Sensor, dgtl3,  BackRightSwitch, sensorTouch)
 #pragma config(Sensor, dgtl2,  BackLeftSwitch, sensorTouch)
@@ -41,6 +42,7 @@ void catch_ball();
 bool checking_reflective_sensor();
 void wait_for_on();
 void align_orientation_with_collection();
+
 //---------------------------tasks definitions-------------------------------------
 task competition();
 task detection();
@@ -90,49 +92,93 @@ void catch_ball()	//can change to bool when include checking ball
 		}
 }
 
-
 void release_ball()
 {
    	align_orientation_with_collection();
+		wait1Msec(500);
 
     clearTimer(T1);
-		while(time1[T1]<10000) //
+		while(time1[T1]<15000) //
 		{
-			 checking_reflective_sensor();
-	     differnetial_drive(-1, -1); // rotate back
-	     if (SensorValue(BackLeftSwitch)!=0 && SensorValue(BackRightSwitch)!=0)
+
+			if (SensorValue[backDistanceSensor] > 450)     //if back distance sensor detects enemy	- NEED TO OPTIMISE
+			{
+				differnetial_drive(0,0);
+				wait1Msec(100);
+				differnetial_drive(2,-2);  		// rotate CCW
+	  		wait1Msec(200);							// NEED TO OPTIMISE TIME
+	  		checking_reflective_sensor();
+				differnetial_drive(1.8,1.8);		//drive forward
+				wait1Msec(300);
+				checking_reflective_sensor();
+				align_orientation_with_collection();
+				wait1Msec(500);
+			}
+
+	    differnetial_drive(-2, -2); // reverse backwards FASTER
+	    if (SensorValue(BackLeftSwitch)!=0 && SensorValue(BackRightSwitch)!=0)
 	     {
 	       // servo release the ball
 	        motor[servoRight] = -45;       // -35
 					motor[servoLeft] = 90;       // 60
 					wait1Msec(1000);
-
-	        differnetial_drive(0, 0); // rotate back
+					differnetial_drive(0, 0); //
+					wait1Msec(100);
 	     }
 		}
 }
 
 
-
-
-
 bool checking_reflective_sensor()
 {
-		if (SensorValue[reflectiveBR] == 0 || SensorValue[reflectiveBL] == 0)
+		if (SensorValue[reflectiveFR] == 0 & SensorValue[reflectiveFL] == 0) //if FRONT back sensors detect, reverse and rotate CCW for 180 degrees
+		{
+			differnetial_drive(-1.8,-1.8);
+	  	wait1Msec(600);	// reverse slightly longer
+	  	differnetial_drive(2,-2);  // rotate CCW
+	  	wait1Msec(400);
+		}
+
+		else if (SensorValue[reflectiveFL] == 0)
 	  {
-	     differnetial_drive(2,2);
+	  	 differnetial_drive(-1.8,-1.8);
+	  	 wait1Msec(400);
+	  	 differnetial_drive(2,-2);  // rotate CW
+	  	 wait1Msec(600);			// does not rotate as much as CCW so longer
+		}
+
+		else if (SensorValue[reflectiveFR] == 0)
+	  {
+	  	 differnetial_drive(-1.8,-1.8);
+	  	 wait1Msec(400);
+	  	 differnetial_drive(-2,2);  // rotate CCW
+	  	 wait1Msec(400);
+		}
+
+		else if (SensorValue[reflectiveBR] == 0)
+	  {
+	     differnetial_drive(1.8,1.8); //drive forward
 	     wait1Msec(400);
-	  	 differnetial_drive(-2,2);
+	  	 differnetial_drive(-2,2);  // rotate CCW
 	  	 wait1Msec(400);
 	  }
+
+	  else if (SensorValue[reflectiveBL] == 0)
+	  {
+	     differnetial_drive(1.8,1.8); //drive forward
+	     wait1Msec(400);
+	  	 differnetial_drive(2,-2);  // rotate CW
+	  	 wait1Msec(600);
+	  }
+	   /*
 	  else if (SensorValue[reflectiveFL] == 0 || SensorValue[reflectiveFR] == 0 )
 	  {
 	  	 differnetial_drive(-2,-2);
 	  	 wait1Msec(400);
-	  	 differnetial_drive(2,-2);
+	  	 differnetial_drive(2,-2);  // rotate CW
 	  	 wait1Msec(400);
 	  }
-	  /*
+
 	  else if (SensorValue[reflectiveBR] != 0 && SensorValue[reflectiveFR] != 0 && SensorValue[reflectiveFL] != 0 && SensorValue[reflectiveBL] != 0)
 		{
 				differnetial_drive(1,1);
@@ -141,7 +187,6 @@ bool checking_reflective_sensor()
 	  */
 	  return false;
 }
-
 
 
 ///------------------------------------------------------
@@ -155,7 +200,7 @@ void align_orientation_with_collection()
 		{
 			while(global_orientation!=NORTH)
 			{
-				differnetial_drive(-2,2);//CCW
+				differnetial_drive(-1.5,1.5);//CCW
 				wait1Msec(100);
 			}
 		}
@@ -163,7 +208,7 @@ void align_orientation_with_collection()
 		{
 			while(global_orientation!=NORTH)
 			{
-				differnetial_drive(2,-2);//CW
+				differnetial_drive(1.5,-1.5);//CW
 				wait1Msec(100);
 			}
 		}
@@ -175,6 +220,7 @@ void align_orientation_with_collection()
 	  }
   }
 }
+
 ///------------------------------------------------------
 
 
@@ -230,7 +276,7 @@ bool search_ball()
 	while(true) // keep searching
 	{
 		clearTimer(T1);
-		while(time1[T1]<1800) // search for 1.6 seconds (level 1),,, level2 -- 0.8 sec
+		while(time1[T1]<3600) // ROTATE ONE ROUND		//1800
 		{
 			if(ballDetected) // if either L1 or L3 detect something
 			{
@@ -245,7 +291,7 @@ bool search_ball()
 
 	  	checking_reflective_sensor();
 			// if not detected, keep turning CCW within this 1.6 second (90 degree)  ///////////////
-      differnetial_drive(-1.8, 1.8); // rotate CCW
+      differnetial_drive(-2, 2); // rotate CCW
 		}
 		////////////////////////////////////////////////////////////////
 
@@ -265,7 +311,7 @@ bool search_ball()
 
 	  	checking_reflective_sensor();
 			// if not detected, keep turning CCW within this 1.6 second (90 degree)  ///////////////
-      differnetial_drive(1.6, 1.6); // rotate CCW
+      differnetial_drive(1.6, 1.6); // drive forward
 		}
 		//////////////////////////////////////////////////////////////
 		return false;
@@ -300,8 +346,8 @@ bool move_to_ball()
 	    }
 	  }
 	  else{
-	    differnetial_drive(0.7,0.7);
-	    wait1Msec(50);
+	    differnetial_drive(0.85,0.85);
+	    wait1Msec(100);
 	  }
   }
   return false;
@@ -390,9 +436,6 @@ task read_orientation_campass()
 	}//end of while
 	return;
 }
-
-
-
 
 
 // main task

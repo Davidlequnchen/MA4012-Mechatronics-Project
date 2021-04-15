@@ -19,10 +19,10 @@ task main()
 	while(getAvailSpaceInDebugStream() >100)
 	{
 		//Write the value of the Sonar sensor to it
-		//writeDebugStreamLine("Analog pin test: %f", (SensorValue[gripperBumper]));
+		writeDebugStreamLine("Analog pin test: %f", (SensorValue[gripperBumper]));
 	  //writeDebugStreamLine("Left Bumper test: %f", (SensorValue(BackLeftSwitch)));
-	  writeDebugStreamLine("digital2 test: %f", (SensorValue(digital2)));
-	  writeDebugStreamLine("digital3 Bumper test: %f", (SensorValue(digital3)));
+	  //writeDebugStreamLine("digital2 test: %f", (SensorValue(digital2)));
+	  //writeDebugStreamLine("digital3 test: %f", (SensorValue(digital3)));
 		sleep(100);
 	}
 
